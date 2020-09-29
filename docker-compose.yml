@@ -36,7 +36,7 @@ services:
         command: mlflow server --backend-store-uri sqlite:///store.db --default-artifact-root s3://mlflow --host 0.0.0.0        
 
     minio:
-        container_name: couture-minio
+        container_name: minio
         image: minio/minio
         ports:
             - "9000:9000"
@@ -46,19 +46,9 @@ services:
         environment:
             - "MINIO_ACCESS_KEY=${AWS_ACCESS_KEY_ID}"
             - "MINIO_SECRET_KEY=${AWS_SECRET_ACCESS_KEY}"
-        command: server /export
-    
-    createbuckets:
-        image: minio/mc
-        depends_on:
-            - minio
-        entrypoint: >
-            /bin/sh -c ""
-            /usr/bin/mc config host add myminio http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY};
-            /usr/bin/mc rm -r --force myminio/mlflow;
-            /usr/bin/mc mb myminio/mlflow;
-            /usr/bin/mc policy download myminio/mlflow;
-            exit 0;
+        entrypoint: sh
+        command: -c 'mkdir -p /export/mlflow && /usr/bin/minio server /export'
+            
 networks:
     frontend:
         driver: bridge
