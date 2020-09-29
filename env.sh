@@ -1,0 +1,8 @@
+export MYSQL_DATABASE=mlflow_backend
+export MYSQL_USER=couture
+export MYSQL_PASSWORD=couture
+export MYSQL_ROOT_PASSWORD=couture
+
+export AWS_ACCESS_KEY_ID=couture_access_key
+export AWS_SECRET_ACCESS_KEY=couture_secret_key
+export MLFLOW_S3_ENDPOINT_URL=minio:9000

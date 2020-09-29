@@ -1,58 +1,51 @@
 version: '3.3'
 
 services:
-    db:
-        restart: always
-        image: mysql/mysql-server:5.7.28
-        container_name: mlflow_db
-        expose:
-            - "3306"
-        networks:
-            - backend
-        environment:
-            - MYSQL_DATABASE=${MYSQL_DATABASE}
-            - MYSQL_USER=${MYSQL_USER}
-            - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-            - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-        volumes:
-            - dbdata:/var/lib/mysql
+    # db:
+    #     container_name: couture-mysql
+    #     restart: always
+    #     image: mysql/mysql-server:5.7.28
+    #     expose:
+    #         - "3306"
+    #     networks:
+    #         - backend
+    #     environment:
+    #         - MYSQL_DATABASE=${MYSQL_DATABASE}
+    #         - MYSQL_USER=${MYSQL_USER}
+    #         - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    #         - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    #         - MYSQL_ROOT_HOST=%
+    #     volumes:
+    #         - dbdata:/var/lib/mysql
 
     web:
+        container_name: couture-mlflow
         restart: always
         build:
             context: https://github.com/coutureai/mlflow.git
-        container_name: mlflow_server
-        expose:
-            - "5000"
+        ports:
+            - "5000:5000"
         networks:
             - frontend
             - backend
         environment:
             - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
             - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-            - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-        command: mlflow server --backend-store-uri mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE} --default-artifact-root s3://mlflow_bucket/mlflow/ --host 0.0.0.0        
+            - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
+        # command: mlflow server --backend-store-uri mysql+pymysql://${MYSQL_USER}:${MYSQL_PASSWORD}@couture-mysql:3306/${MYSQL_DATABASE} --default-artifact-root s3://mlflow --host 0.0.0.0        
+        command: mlflow server --backend-store-uri sqlite:///store.db --default-artifact-root s3://mlflow --host 0.0.0.0        
 
-    nginx:
-        restart: always
-        image: nginx:1.14.0-alpine
-        container_name: mlflow_nginx
-        ports:
-            - "80:80"
-        networks:
-            - frontend
-        depends_on:
-            - web
     minio:
+        container_name: couture-minio
         image: minio/minio
         ports:
             - "9000:9000"
         volumes:
-            - ./test/.minio/data:/export
-            - ./test/.minio/config:/root/.minio
+            - ./minio/.minio/data:/export
+            - ./minio/.minio/config:/root/.minio
         environment:
-            - "MINIO_ACCESS_KEY=${AWS_ACCESS_KEY}"
-            - "MINIO_SECRET_KEY=${AWS_SECRET_KEY}"
+            - "MINIO_ACCESS_KEY=${AWS_ACCESS_KEY_ID}"
+            - "MINIO_SECRET_KEY=${AWS_SECRET_ACCESS_KEY}"
         command: server /export
     
     createbuckets:
@@ -60,8 +53,8 @@ services:
         depends_on:
             - minio
         entrypoint: >
-            /bin/sh -c "
-            /usr/bin/mc config host add myminio http://minio:9000 ${AWS_ACCESS_KEY} ${AWS_SECRET_KEY};
+            /bin/sh -c ""
+            /usr/bin/mc config host add myminio http://minio:9000 ${AWS_ACCESS_KEY_ID} ${AWS_SECRET_ACCESS_KEY};
             /usr/bin/mc rm -r --force myminio/mlflow;
             /usr/bin/mc mb myminio/mlflow;
             /usr/bin/mc policy download myminio/mlflow;
