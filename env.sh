@@ -5,4 +5,4 @@ export MYSQL_ROOT_PASSWORD=couture
 
 export AWS_ACCESS_KEY_ID=couture_access_key
 export AWS_SECRET_ACCESS_KEY=couture_secret_key
-export MLFLOW_S3_ENDPOINT_URL=minio:9000
+export MLFLOW_S3_ENDPOINT_URL=couture-minio:9000
