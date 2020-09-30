@@ -36,7 +36,7 @@ services:
         command: mlflow server --backend-store-uri sqlite:///store.db --default-artifact-root s3://mlflow --host 0.0.0.0        
 
     minio:
-        container_name: minio
+        container_name: couture-minio
         image: minio/minio
         ports:
             - "9000:9000"
@@ -48,6 +48,8 @@ services:
             - "MINIO_SECRET_KEY=${AWS_SECRET_ACCESS_KEY}"
         entrypoint: sh
         command: -c 'mkdir -p /export/mlflow && /usr/bin/minio server /export'
+        networks:
+            - backend
             
 networks:
     frontend:
